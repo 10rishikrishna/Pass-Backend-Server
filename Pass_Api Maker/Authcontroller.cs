@@ -171,7 +171,7 @@ namespace Pass_Api_Maker.Controllers
         public bool IncludeNumbers { get; set; } = true;
         public bool IncludeSpecialChars { get; set; } = true;
     }
-
+    // this is a self test
     public class ChangePasswordRequest
     {
         public string Username { get; set; }
