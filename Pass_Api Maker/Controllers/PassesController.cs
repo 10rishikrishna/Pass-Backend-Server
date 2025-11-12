@@ -7,35 +7,32 @@ namespace Pass_Api_Maker.Controllers
     [Route("api/[controller]")]
     public class PassesController : ControllerBase
     {
-        // In-memory storage (replace with database in production)
         private static List<PassModel> passes = new List<PassModel>();
         private static object lockObj = new object();
 
-        /// <summary>
-        /// Submit a new pass for approval
-        /// </summary>
         [HttpPost]
         public IActionResult SubmitPass([FromBody] PassModel pass)
         {
             if (pass == null)
                 return BadRequest(new { message = "Pass data is required" });
 
-            if (string.IsNullOrEmpty(pass.LaborID))
+            if (string.IsNullOrWhiteSpace(pass.LaborID))
                 return BadRequest(new { message = "LaborID is required" });
+
+            if (string.IsNullOrWhiteSpace(pass.FullName))
+                return BadRequest(new { message = "FullName is required" });
 
             lock (lockObj)
             {
-                // Check for duplicates
                 var existing = passes.FirstOrDefault(p => p.LaborID == pass.LaborID && p.Status == "Pending");
                 if (existing != null)
                     return BadRequest(new { message = $"A pending pass already exists for LaborID: {pass.LaborID}" });
 
                 pass.Status = "Pending";
                 pass.SubmittedAt = DateTime.Now;
-
-                // Initialize nullable fields if null
-                pass.ApprovedBy ??= "";
-                pass.RejectionReason ??= "";
+                pass.ApprovedBy = pass.ApprovedBy ?? "";
+                pass.RejectionReason = pass.RejectionReason ?? "";
+                pass.DigitalSignature = null;
 
                 passes.Add(pass);
 
@@ -50,9 +47,6 @@ namespace Pass_Api_Maker.Controllers
             });
         }
 
-        /// <summary>
-        /// Get all passes (for Authenticator)
-        /// </summary>
         [HttpGet]
         public IActionResult GetAllPasses()
         {
@@ -63,9 +57,6 @@ namespace Pass_Api_Maker.Controllers
             }
         }
 
-        /// <summary>
-        /// Get approved passes only (for Form9 to poll)
-        /// </summary>
         [HttpGet("approved")]
         public IActionResult GetApprovedPasses()
         {
@@ -77,13 +68,24 @@ namespace Pass_Api_Maker.Controllers
             }
         }
 
-        /// <summary>
-        /// Update pass status (Approve/Reject)
-        /// </summary>
+        [HttpGet("{laborId}")]
+        public IActionResult GetPassByLaborId(string laborId)
+        {
+            lock (lockObj)
+            {
+                var pass = passes.FirstOrDefault(p => p.LaborID == laborId);
+
+                if (pass == null)
+                    return NotFound(new { message = "Pass not found" });
+
+                return Ok(pass);
+            }
+        }
+
         [HttpPost("update-status")]
         public IActionResult UpdatePassStatus([FromBody] StatusUpdateRequest request)
         {
-            if (request == null || string.IsNullOrEmpty(request.LaborID))
+            if (request == null || string.IsNullOrWhiteSpace(request.LaborID))
                 return BadRequest(new { message = "LaborID is required" });
 
             lock (lockObj)
@@ -92,14 +94,22 @@ namespace Pass_Api_Maker.Controllers
                 if (pass == null)
                     return NotFound(new { message = $"Pass not found for LaborID: {request.LaborID}" });
 
-                // Update status
                 pass.Status = request.Status;
                 pass.ApprovedBy = request.ApprovedBy ?? "";
                 if (DateTime.TryParse(request.ApprovedAt, out DateTime approvedDate))
                     pass.ApprovedAt = approvedDate;
+                else
+                    pass.ApprovedAt = DateTime.Now;
+
                 pass.RejectionReason = request.Reason ?? "";
+                pass.DigitalSignature = request.DigitalSignature;
 
                 Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] 🔄 Pass status updated - LaborID: {pass.LaborID}, Status: {pass.Status}, By: {pass.ApprovedBy}");
+
+                if (pass.DigitalSignature != null)
+                {
+                    Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] ✅ Digital signature received: {pass.DigitalSignature.SignatureId}");
+                }
             }
 
             return Ok(new
@@ -107,13 +117,11 @@ namespace Pass_Api_Maker.Controllers
                 message = $"Pass {request.Status.ToLower()} successfully",
                 laborID = request.LaborID,
                 status = request.Status,
-                approvedBy = request.ApprovedBy
+                approvedBy = request.ApprovedBy,
+                signatureId = request.DigitalSignature?.SignatureId
             });
         }
 
-        /// <summary>
-        /// Mark pass as downloaded
-        /// </summary>
         [HttpPost("mark-downloaded/{laborId}")]
         public IActionResult MarkAsDownloaded(string laborId)
         {
@@ -132,9 +140,6 @@ namespace Pass_Api_Maker.Controllers
             return Ok(new { message = "Pass marked as downloaded", laborID = laborId });
         }
 
-        /// <summary>
-        /// Clear all passes (for testing)
-        /// </summary>
         [HttpDelete("clear")]
         public IActionResult ClearAllPasses()
         {
@@ -148,41 +153,40 @@ namespace Pass_Api_Maker.Controllers
         }
     }
 
-    // Models
     public class PassModel
     {
         [JsonPropertyName("laborID")]
-        public string LaborID { get; set; }
+        public string LaborID { get; set; } = "";
 
         [JsonPropertyName("fullName")]
-        public string FullName { get; set; }
+        public string FullName { get; set; } = "";
 
         [JsonPropertyName("dob")]
-        public string DOB { get; set; }
+        public string? DOB { get; set; }
 
         [JsonPropertyName("contractorName")]
-        public string ContractorName { get; set; }
+        public string? ContractorName { get; set; }
 
         [JsonPropertyName("area")]
-        public string Area { get; set; }
+        public string? Area { get; set; }
 
         [JsonPropertyName("gateAccess")]
-        public string GateAccess { get; set; }
+        public string? GateAccess { get; set; }
 
         [JsonPropertyName("entryDate")]
-        public string EntryDate { get; set; }
+        public string? EntryDate { get; set; }
 
         [JsonPropertyName("exitDate")]
-        public string ExitDate { get; set; }
+        public string? ExitDate { get; set; }
 
         [JsonPropertyName("entryTime")]
-        public string EntryTime { get; set; }
+        public string? EntryTime { get; set; }
 
         [JsonPropertyName("checkoutTime")]
-        public string CheckoutTime { get; set; }
+        public string? CheckoutTime { get; set; }
 
         [JsonPropertyName("labourImageBase64")]
-        public string LabourImageBase64 { get; set; }
+        public string? LabourImageBase64 { get; set; }
 
         [JsonPropertyName("status")]
         public string Status { get; set; } = "Pending";
@@ -190,7 +194,6 @@ namespace Pass_Api_Maker.Controllers
         [JsonPropertyName("submittedAt")]
         public DateTime SubmittedAt { get; set; } = DateTime.Now;
 
-        // FIX: Make these nullable with ? to accept null values
         [JsonPropertyName("approvedBy")]
         public string? ApprovedBy { get; set; }
 
@@ -205,15 +208,18 @@ namespace Pass_Api_Maker.Controllers
 
         [JsonPropertyName("downloadedAt")]
         public DateTime? DownloadedAt { get; set; }
+
+        [JsonPropertyName("digitalSignature")]
+        public DigitalSignatureData? DigitalSignature { get; set; }
     }
 
     public class StatusUpdateRequest
     {
         [JsonPropertyName("laborID")]
-        public string LaborID { get; set; }
+        public string LaborID { get; set; } = "";
 
         [JsonPropertyName("status")]
-        public string Status { get; set; }
+        public string Status { get; set; } = "";
 
         [JsonPropertyName("reason")]
         public string? Reason { get; set; }
@@ -223,5 +229,35 @@ namespace Pass_Api_Maker.Controllers
 
         [JsonPropertyName("approvedAt")]
         public string? ApprovedAt { get; set; }
+
+        [JsonPropertyName("digitalSignature")]
+        public DigitalSignatureData? DigitalSignature { get; set; }
+    }
+
+    public class DigitalSignatureData
+    {
+        [JsonPropertyName("signatureId")]
+        public string? SignatureId { get; set; }
+
+        [JsonPropertyName("signerName")]
+        public string? SignerName { get; set; }
+
+        [JsonPropertyName("signerTitle")]
+        public string? SignerTitle { get; set; }
+
+        [JsonPropertyName("signerOrganization")]
+        public string? SignerOrganization { get; set; }
+
+        [JsonPropertyName("signedDate")]
+        public DateTime SignedDate { get; set; }
+
+        [JsonPropertyName("documentHash")]
+        public string? DocumentHash { get; set; }
+
+        [JsonPropertyName("signatureValue")]
+        public string? SignatureValue { get; set; }
+
+        [JsonPropertyName("publicKey")]
+        public string? PublicKey { get; set; }
     }
 }
