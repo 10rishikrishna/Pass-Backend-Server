@@ -1,15 +1,15 @@
 <div align="center">
 
-# 🛂 CIAL Pass API
+# 🛂   Pass API
 
-### *The Live Backend Powering the CIAL Entry Pass System*
+### *The Live Backend Powering the   Entry Pass System*
 
 [![Platform](https://img.shields.io/badge/Platform-ASP.NET%20Core%209.0-512BD4?style=for-the-badge&logo=dotnet)](https://dotnet.microsoft.com)
 [![Language](https://img.shields.io/badge/Language-C%23-239120?style=for-the-badge&logo=csharp)](https://learn.microsoft.com/en-us/dotnet/csharp/)
 [![Hosted](https://img.shields.io/badge/Hosted%20on-Render-46E3B7?style=for-the-badge&logo=render)](https://render.com)
 [![Live](https://img.shields.io/badge/Status-Live-27AE60?style=for-the-badge)]()
 
-> The central REST API that connects the **Pass Generator** and **Pass Authenticator** apps — handling pass submissions, status updates, digital signatures, and pass image generation for Cochin International Airport Limited.
+> The central REST API that connects the **Pass Generator** and **Pass Authenticator** apps — handling pass submissions, status updates, digital signatures
 
 **🌐 Live Server:** [https://pass-api-e4so.onrender.com](https://pass-api-e4so.onrender.com)
 
@@ -19,7 +19,7 @@
 
 ## 📋 Overview
 
-The **CIAL Pass API** is an ASP.NET Core 9 REST API deployed on Render, acting as the backbone of the entire CIAL Entry Pass ecosystem. It receives pass requests from the Pass Generator app, stores them in memory, and serves them to the Authenticator app for review. Once a decision is made, the API records the approval or rejection along with the officer's digital signature.
+The **  Pass API** is an ASP.NET Core 9 REST API deployed on Render, acting as the backbone of the entire   Entry Pass ecosystem. It receives pass requests from the Pass Generator app, stores them in memory, and serves them to the Authenticator app for review. Once a decision is made, the API records the approval or rejection along with the officer's digital signature.
 
 It also handles **aerodrome entry pass image generation** — rendering complete pass cards as PNG images using `System.Drawing`.
 
@@ -54,31 +54,11 @@ It also handles **aerodrome entry pass image generation** — rendering complete
 }
 ```
 
-### Update Status — `POST /api/passes/update-status`
-```json
-{
-  "laborID": "LAB001",
-  "status": "Approved",
-  "reason": "",
-  "approvedBy": "Sindhu Santhosh",
-  "approvedAt": "2025-04-11 10:30:00",
-  "digitalSignature": {
-    "signatureId": "...",
-    "signerName": "Sindhu Santhosh",
-    "signerTitle": "Assistant General Manager - Security",
-    "signerOrganization": "Cochin International Airport Limited",
-    "signedDate": "2025-04-11T10:30:00"
-  }
-}
-```
-
----
-
 ## ✨ Features
 
 ### 🖼️ Pass Image Generation
 Generates aerodrome entry permit PNG images using `System.Drawing` with:
-- CIAL logo and header
+- logo and header
 - Employee photo (from Base64)
 - Labor ID, contractor, DOB details
 - Validity dates and access gate info
@@ -162,6 +142,5 @@ Passes are currently stored **in memory**. Data resets if the server restarts. P
 
 Built & maintained by [Rishi Krishna](https://github.com/10rishikrishna)
 
-*CIAL Security Operations Division — Cochin International Airport Limited*
 
 </div>
