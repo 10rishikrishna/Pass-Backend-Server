@@ -140,8 +140,8 @@ app.MapGet("/", () => Results.Content(@"
 <body>
     <div class='container'>
         <div class='logo'>🛂</div>
-        <h1>CIAL Entry Pass API</h1>
-        <p class='subtitle'>Cochin International Airport Limited</p>
+        <h1>Labour Pass Backend Server</h1>
+        <p class='subtitle'>Prototype System for - CIAL</p>
 
         <div class='status-card'>
             <div class='pulse-dot'></div>
@@ -157,14 +157,9 @@ app.MapGet("/", () => Results.Content(@"
                 <span class='method post'>POST</span>
                 <span class='endpoint-path'>/api/passes</span>
             </div>
-            <div class='endpoint'>
-                <span class='method post'>POST</span>
-                <span class='endpoint-path'>/api/passes/update-status</span>
-            </div>
         </div>
 
         <div class='footer'>
-            CIAL Security Operations Division
             <div class='uptime'>⚡ Hosted on Render</div>
             <div style='margin-top:12px; color:rgba(255,255,255,0.25); font-size:11px;'>
                 Built & maintained by 
